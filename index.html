@@ -2,586 +2,470 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ryopcチャット</title>
-    <!-- PWA Meta Tags -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#2563eb">
-    <link rel="manifest" href="data:application/json;base64,ewogICJpZCI6ICJyeW9wYy1jaGF0IiwKICAic2hvcnRfbmFtZSI6ICJyeW9wYyIsCiAgIm5hbWUiOiAicnlvcGMgQ2hhdCIsCiAgImljb25zIjogWwogICAgewogICAgICAic3JjIjogImh0dHBzOi8vY2RuLWljb25zLXBuZy5mbGF0aWNvbi5jb20vNTEyLzczMi83MzIyMzYucG5nIiwKICAgICAgInNpemVzIjogIjUxMng1MTIiLAogICAgICAidHlwZSI6ICJpbWFnZS9wbmciCiAgICB9CiAgXSwKICAic3RhcnRfdXJsIjogIi4iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiNmOGZhZmMiLAogICJ0aGVtZV9jb2xvciI6ICIjMjU2M2ViIgp9">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ntfy Messenger</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap');
-        
-        :root {
-            --primary: #2563eb;
-            --bg-main: #f8fafc;
-            --bg-card: #ffffff;
-            --text-main: #1e293b;
+        .message-inbound {
+            border-bottom-left-radius: 2px;
         }
-
-        .dark {
-            --bg-main: #0f172a;
-            --bg-card: #1e293b;
-            --text-main: #f1f5f9;
+        .message-outbound {
+            border-bottom-right-radius: 2px;
         }
-
-        body {
-            font-family: 'Noto Sans JP', sans-serif;
-            background-color: var(--bg-main);
-            color: var(--text-main);
-            overscroll-behavior-y: contain;
-            transition: background-color 0.3s;
+        ::-webkit-scrollbar {
+            width: 6px;
         }
-
-        /* Desktop Layout Rules */
-        @media (min-width: 1024px) {
-            .desktop-sidebar {
-                display: flex !important;
-                position: static !important;
-                transform: none !important;
-                width: 320px !important;
-                flex-shrink: 0;
-            }
-            .desktop-hide-tabs {
-                display: none !important;
-            }
-            .main-content-area {
-                flex-direction: row !important;
-            }
-            #view-chat {
-                flex: 1 !important;
-                position: relative !important;
-                transform: none !important;
-                display: flex !important;
-            }
-            #view-settings {
-                width: 350px !important;
-                position: static !important;
-                transform: none !important;
-                border-left: 1px solid #e2e8f0;
-                display: flex !important;
-                flex-direction: column;
-            }
-            .dark #view-settings { border-left-color: #334155; }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
         }
-
         #chat-container {
             height: calc(100vh - 140px);
-            padding-bottom: 20px;
         }
-
-        .bubble {
-            max-width: 85%;
-            position: relative;
-            border-radius: 1.25rem;
-            transition: transform 0.2s ease;
-        }
-        
-        .bubble-inbound {
-            border-bottom-left-radius: 0.25rem;
-            background-color: var(--bg-card);
-            border: 1px solid #e2e8f0;
-        }
-
-        .dark .bubble-inbound {
-            border-color: #334155;
-        }
-
-        .bubble-outbound {
-            border-bottom-right-radius: 0.25rem;
-            background-color: var(--primary);
-            color: white;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
-        }
-
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
-
-        .slide-in { animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .file-attachment {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem;
-            background: rgba(0,0,0,0.04);
-            border-radius: 1rem;
-            margin-top: 0.5rem;
-        }
-        .dark .file-attachment { background: rgba(255,255,255,0.08); }
-
-        #drop-zone {
-            display: none;
-            position: absolute;
-            inset: 0;
-            z-index: 50;
-            background: rgba(37, 99, 235, 0.1);
-            backdrop-blur: 8px;
-            border: 4px dashed #2563eb;
-            pointer-events: none;
-        }
-        .dragging #drop-zone {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .msg-actions {
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-        .msg-group:hover .msg-actions {
-            opacity: 1;
-        }
-        @media (max-width: 1024px) {
-            .msg-actions { opacity: 0.4; }
-        }
-
-        .pulse { animation: pulse 1.5s infinite; }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+        @media (max-width: 640px) {
+            #sidebar {
+                display: none;
+            }
+            #sidebar.active {
+                display: block;
+                position: absolute;
+                z-index: 50;
+                width: 80%;
+                height: 100%;
+            }
         }
     </style>
 </head>
-<body class="h-screen flex flex-col overflow-hidden">
+<body class="bg-slate-100 font-sans h-screen overflow-hidden">
 
-    <!-- Header -->
-    <header class="h-16 flex items-center justify-between px-5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40">
-        <div class="flex items-center gap-3">
-            <div class="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
-                <span class="text-white font-black text-xs italic">ryo</span>
-            </div>
-            <div>
-                <h1 id="header-title" class="font-black text-lg tracking-tight dark:text-white leading-none">ryopcチャット</h1>
-                <p id="header-subtitle" class="text-[10px] text-slate-400 font-bold mt-1">v3.1 Built-in Notifier</p>
-            </div>
+<div class="flex h-full">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="w-72 bg-slate-800 text-white flex flex-col transition-all duration-300 border-r border-slate-700">
+        <div class="p-4 border-b border-slate-700 flex justify-between items-center">
+            <h1 class="text-xl font-bold italic text-blue-400 tracking-tighter">ntfy Chat</h1>
+            <button id="close-sidebar" class="sm:hidden text-slate-400">✕</button>
         </div>
-        <div class="flex items-center gap-2">
-            <button id="clear-history-btn" class="p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 text-slate-400 hover:text-red-500 transition-colors hidden" title="履歴クリア">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-            </button>
-            <button id="notification-btn" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500" title="通知設定">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
-            </button>
-            <button id="dark-mode-btn" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+        
+        <div class="p-4">
+            <button id="add-topic-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg flex items-center justify-center transition-colors shadow-md">
+                <span class="mr-2">+</span> 新規ルーム追加
             </button>
         </div>
-    </header>
 
-    <!-- Main Content -->
-    <main class="flex-1 overflow-hidden relative flex main-content-area" id="main-area">
-        <!-- Sidebar -->
-        <div id="view-rooms" class="desktop-sidebar absolute inset-0 bg-slate-50 dark:bg-slate-900 z-30 transform translate-x-0 transition-transform duration-300 overflow-y-auto border-r border-slate-200 dark:border-slate-800 p-5">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-black dark:text-white">ルーム一覧</h3>
-                <button id="new-room-btn" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md hover:bg-blue-700 active:scale-95 transition-all">+ 作成</button>
-            </div>
-            <div id="topic-list" class="space-y-2"></div>
+        <div id="topic-list" class="flex-1 overflow-y-auto px-2 space-y-1">
+            <!-- Topics will be rendered here -->
         </div>
 
-        <!-- Chat View -->
-        <div id="view-chat" class="flex-1 flex flex-col h-full bg-white dark:bg-slate-900 transform transition-transform duration-300 z-20 translate-x-full lg:translate-x-0 relative">
-            <div id="drop-zone">
-                <div class="bg-white dark:bg-slate-900 px-8 py-4 rounded-3xl shadow-2xl flex flex-col items-center gap-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-blue-600 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
-                    <p class="font-black text-blue-600 uppercase tracking-widest text-sm text-center">ここにドロップして準備</p>
+        <!-- User Settings -->
+        <div class="p-4 border-t border-slate-700 bg-slate-900/50">
+            <label class="text-[10px] text-slate-400 uppercase tracking-wider block mb-1">あなたのユーザー名</label>
+            <div class="flex items-center group">
+                <input 
+                    id="username-input" 
+                    type="text" 
+                    class="bg-transparent border-b border-transparent hover:border-slate-500 focus:border-blue-500 focus:outline-none text-sm font-medium w-full py-1 transition-colors"
+                    placeholder="名前を入力..."
+                    title="クリックして名前を変更"
+                >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-slate-500 group-hover:text-blue-400 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+            </div>
+            <p class="text-[9px] text-slate-500 mt-2 italic">※ブラウザに保存されます</p>
+        </div>
+    </aside>
+
+    <!-- Main Chat Area -->
+    <main class="flex-1 flex flex-col relative bg-[#f0f2f5]">
+        <!-- Chat Header -->
+        <header class="bg-white h-16 border-b border-slate-200 flex items-center px-4 justify-between shadow-sm z-10">
+            <div class="flex items-center">
+                <button id="open-sidebar" class="sm:hidden mr-3 text-slate-600">☰</button>
+                <div>
+                    <h2 id="current-topic-name" class="font-bold text-slate-800 text-lg leading-tight">ルームを選択してください</h2>
+                    <p id="connection-status" class="text-xs text-slate-400 flex items-center mt-0.5">
+                        <span id="status-dot" class="w-2 h-2 rounded-full bg-gray-300 mr-1.5 transition-colors duration-500"></span>
+                        <span id="status-text">待機中</span>
+                    </p>
                 </div>
             </div>
-
-            <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar">
-                <div class="flex flex-col items-center justify-center h-full opacity-20">
-                    <p class="text-sm font-bold">会話を始めましょう</p>
-                </div>
+            <div class="flex space-x-2">
+                <button id="clear-chat" class="text-slate-400 hover:text-red-500 p-2 transition-colors" title="履歴を削除">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </button>
             </div>
+        </header>
 
-            <!-- File Preview -->
-            <div id="file-preview-area" class="px-4 py-3 hidden bg-blue-50 dark:bg-blue-900/20 border-t border-blue-100 dark:border-blue-900/50">
-                <div class="bg-white dark:bg-slate-900 rounded-2xl p-3 flex justify-between items-center border border-blue-200 dark:border-blue-800 shadow-sm">
-                    <div class="flex items-center gap-3 overflow-hidden">
-                        <div class="w-10 h-10 bg-blue-600 text-white rounded-lg text-[10px] flex items-center justify-center font-black" id="file-ext">FILE</div>
-                        <div class="overflow-hidden">
-                            <p id="file-name" class="text-sm truncate font-bold dark:text-white">file.name</p>
-                            <p id="file-size" class="text-[10px] text-slate-400">0 KB</p>
-                        </div>
-                    </div>
-                    <button id="cancel-file" class="p-2 text-slate-400 hover:text-red-500"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
-                </div>
-            </div>
-
-            <!-- Input Bar -->
-            <div id="input-container" class="p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 hidden pb-safe">
-                <div class="flex items-end gap-2 max-w-4xl mx-auto">
-                    <button id="file-btn" class="p-3 text-slate-400 hover:text-blue-500"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg></button>
-                    <input type="file" id="hidden-file" class="hidden">
-                    <div class="flex-1 bg-slate-100 dark:bg-slate-800 rounded-2xl p-1 px-3 flex items-center shadow-inner">
-                        <textarea id="message-input" rows="1" placeholder="メッセージ..." class="w-full bg-transparent border-none py-3 focus:ring-0 outline-none text-sm dark:text-white resize-none"></textarea>
-                    </div>
-                    <button id="send-btn" class="p-3.5 bg-blue-600 text-white rounded-2xl shadow-lg active:scale-90 hover:bg-blue-700 transition-all"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg></button>
-                </div>
+        <!-- Messages Area -->
+        <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4">
+            <!-- Messages appear here -->
+            <div class="flex flex-col items-center justify-center h-full text-slate-400 italic">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-3 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                <p>サイドバーからルームを選んでください</p>
             </div>
         </div>
 
-        <!-- Settings View -->
-        <div id="view-settings" class="absolute inset-0 bg-slate-50 dark:bg-slate-900 z-30 transform translate-x-full transition-transform duration-300 overflow-y-auto p-6">
-            <h3 class="text-2xl font-black mb-8 dark:text-white">マイページ</h3>
-            <div class="space-y-6">
-                <div class="flex flex-col items-center mb-8">
-                    <div class="w-24 h-24 bg-gradient-to-tr from-blue-600 to-indigo-400 rounded-3xl shadow-xl flex items-center justify-center text-white text-4xl font-black" id="user-avatar-preview">?</div>
+        <!-- Input Area -->
+        <footer id="input-area" class="bg-white p-4 border-t border-slate-200 hidden">
+            <form id="chat-form" class="flex items-end space-x-2 max-w-4xl mx-auto">
+                <div class="flex-1 relative">
+                    <textarea 
+                        id="message-input" 
+                        rows="1" 
+                        placeholder="メッセージを入力..." 
+                        class="w-full bg-slate-100 border-0 rounded-2xl py-3 px-4 focus:ring-2 focus:ring-blue-500 outline-none resize-none overflow-hidden max-h-32"
+                    ></textarea>
                 </div>
-
-                <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 space-y-4">
-                    <div>
-                        <label class="block text-[10px] font-black text-blue-500 uppercase mb-2">表示名</label>
-                        <input id="user-name-input" type="text" maxlength="20" class="w-full bg-slate-50 dark:bg-slate-700 p-4 rounded-2xl border-none font-bold dark:text-white">
-                    </div>
-                </div>
-
-                <div class="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700">
-                    <h4 class="text-xs font-black text-slate-400 mb-4 uppercase">通知設定</h4>
-                    <button id="toggle-notif-row" class="w-full flex justify-between items-center py-2">
-                        <span class="text-sm font-bold dark:text-white">デスクトップ通知</span>
-                        <div id="notif-status-badge" class="px-2 py-1 rounded text-[10px] font-black bg-slate-100 dark:bg-slate-700 text-slate-400">未許可</div>
-                    </button>
-                    <p class="text-[9px] text-slate-400 mt-2 italic">※アプリが閉じているときに通知されます</p>
-                </div>
-            </div>
-        </div>
+                <button type="submit" class="bg-blue-600 text-white p-3 rounded-full hover:bg-blue-700 transition-colors shadow-lg active:scale-95 duration-75">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 transform rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                </button>
+            </form>
+        </footer>
     </main>
+</div>
 
-    <!-- Bottom Tab Bar -->
-    <nav class="desktop-hide-tabs h-16 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center justify-around px-2 z-40 pb-safe">
-        <button id="tab-rooms" class="flex flex-col items-center gap-1 text-slate-400 flex-1">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
-            <span class="text-[9px] font-bold">ルーム</span>
-        </button>
-        <button id="tab-chat" class="flex flex-col items-center gap-1 text-slate-400 flex-1">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
-            <span class="text-[9px] font-bold">チャット</span>
-        </button>
-        <button id="tab-settings" class="flex flex-col items-center gap-1 text-slate-400 flex-1">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-            <span class="text-[9px] font-bold">マイページ</span>
-        </button>
-    </nav>
-
-    <!-- Modal -->
-    <div id="modal-overlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[60] flex items-center justify-center p-6 hidden">
-        <div class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-3xl p-8 shadow-2xl transition-all">
-            <h3 class="text-xl font-black mb-2 dark:text-white text-center">新しいルームを作る</h3>
-            <input id="new-room-input" type="text" placeholder="例: private-talk" class="w-full bg-slate-100 dark:bg-slate-700 p-4 rounded-2xl border-none mb-6 text-center font-bold dark:text-white focus:ring-2 focus:ring-blue-500 outline-none">
-            <div class="flex gap-2">
-                <button id="close-modal" class="flex-1 py-4 font-bold text-slate-400">キャンセル</button>
-                <button id="create-room" class="flex-1 py-4 bg-blue-600 text-white rounded-2xl font-bold">作成</button>
-            </div>
+<!-- Add Topic Modal -->
+<div id="modal-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-[60] flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 transform transition-all scale-100">
+        <h3 class="text-xl font-bold mb-2 text-slate-800">新しいルームを追加</h3>
+        <p class="text-sm text-slate-500 mb-5">ntfy.sh上のトピック名を指定してください。</p>
+        <div class="relative mb-6">
+            <span class="absolute left-3 top-3 text-slate-400 text-sm">ntfy.sh/</span>
+            <input 
+                id="topic-input" 
+                type="text" 
+                placeholder="topic-name" 
+                class="w-full border border-slate-300 rounded-xl p-3 pl-[64px] focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+            >
+        </div>
+        <div class="flex justify-end space-x-3">
+            <button id="cancel-modal" class="px-4 py-2 text-slate-500 hover:text-slate-800 transition-colors">キャンセル</button>
+            <button id="confirm-modal" class="px-8 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-bold transition-all shadow-lg active:scale-95">作成</button>
         </div>
     </div>
+</div>
 
 <script>
+    // --- State Management ---
     const state = {
-        username: localStorage.getItem('ryopc_user') || 'ゲスト_' + Math.floor(Math.random() * 9999),
-        topics: JSON.parse(localStorage.getItem('ryopc_topics')) || ['public'],
-        history: JSON.parse(localStorage.getItem('ryopc_history')) || {},
+        topics: JSON.parse(localStorage.getItem('ntfy_topics')) || [],
         activeTopic: null,
-        socket: null,
-        pendingFile: null,
-        dark: localStorage.getItem('ryopc_dark') === 'true',
-        notifEnabled: Notification.permission === 'granted'
+        chatHistory: JSON.parse(localStorage.getItem('ntfy_history')) || {},
+        username: localStorage.getItem('ntfy_username') || '名無しのユーザー_' + Math.floor(Math.random() * 900 + 100),
+        socket: null
     };
 
-    const views = { rooms: document.getElementById('view-rooms'), chat: document.getElementById('view-chat'), settings: document.getElementById('view-settings') };
-    const tabs = { rooms: document.getElementById('tab-rooms'), chat: document.getElementById('tab-chat'), settings: document.getElementById('tab-settings') };
+    // --- DOM Elements ---
+    const topicListEl = document.getElementById('topic-list');
+    const chatContainer = document.getElementById('chat-container');
+    const chatForm = document.getElementById('chat-form');
+    const messageInput = document.getElementById('message-input');
+    const currentTopicName = document.getElementById('current-topic-name');
+    const inputArea = document.getElementById('input-area');
+    const addTopicBtn = document.getElementById('add-topic-btn');
+    const modalOverlay = document.getElementById('modal-overlay');
+    const topicInput = document.getElementById('topic-input');
+    const cancelModal = document.getElementById('cancel-modal');
+    const confirmModal = document.getElementById('confirm-modal');
+    const statusDot = document.getElementById('status-dot');
+    const statusText = document.getElementById('status-text');
+    const clearChatBtn = document.getElementById('clear-chat');
+    const usernameInput = document.getElementById('username-input');
+    const openSidebarBtn = document.getElementById('open-sidebar');
+    const closeSidebarBtn = document.getElementById('close-sidebar');
+    const sidebar = document.getElementById('sidebar');
 
-    // Init UI
-    if (state.dark) document.body.classList.add('dark');
-    document.getElementById('user-name-input').value = state.username;
-    updateAvatar();
-    updateNotifBadge();
+    // Init username field
+    usernameInput.value = state.username;
 
-    function save() {
-        localStorage.setItem('ryopc_user', state.username);
-        localStorage.setItem('ryopc_topics', JSON.stringify(state.topics));
-        localStorage.setItem('ryopc_history', JSON.stringify(state.history));
-        localStorage.setItem('ryopc_dark', state.dark);
-    }
+    // --- Core Functions ---
 
-    function updateAvatar() {
-        document.getElementById('user-avatar-preview').textContent = state.username.charAt(0).toUpperCase();
-    }
-
-    function updateNotifBadge() {
-        const badge = document.getElementById('notif-status-badge');
-        if (Notification.permission === 'granted') {
-            badge.textContent = '有効';
-            badge.className = 'px-2 py-1 rounded text-[10px] font-black bg-green-100 text-green-600';
-            state.notifEnabled = true;
-        } else if (Notification.permission === 'denied') {
-            badge.textContent = '拒否中';
-            badge.className = 'px-2 py-1 rounded text-[10px] font-black bg-red-100 text-red-600';
-            state.notifEnabled = false;
-        } else {
-            badge.textContent = '未許可';
-            state.notifEnabled = false;
-        }
-    }
-
-    function requestNotifPermission() {
-        if (!("Notification" in window)) return;
-        Notification.requestPermission().then(permission => {
-            updateNotifBadge();
-            if (permission === "granted") {
-                new Notification("ryopcチャット", { body: "通知が有効になりました！" });
-            }
-        });
-    }
-
-    function switchView(target) {
-        Object.keys(tabs).forEach(k => {
-            tabs[k].classList.remove('text-blue-600');
-            tabs[k].classList.add('text-slate-400');
-        });
-        tabs[target].classList.add('text-blue-600');
-        tabs[target].classList.remove('text-slate-400');
-
-        if (window.innerWidth < 1024) {
-            Object.keys(views).forEach(k => views[k].classList.add('translate-x-full'));
-            views[target].classList.remove('translate-x-full');
-        }
-    }
-
-    tabs.rooms.onclick = () => switchView('rooms');
-    tabs.chat.onclick = () => switchView('chat');
-    tabs.settings.onclick = () => switchView('settings');
-
-    function selectTopic(topic) {
-        state.activeTopic = topic;
-        document.getElementById('header-title').textContent = `# ${topic}`;
-        document.getElementById('input-container').classList.remove('hidden');
-        document.getElementById('clear-history-btn').classList.remove('hidden');
-        renderChat();
-        connect(topic);
-        switchView('chat');
-        renderTopics();
+    function saveState() {
+        localStorage.setItem('ntfy_topics', JSON.stringify(state.topics));
+        localStorage.setItem('ntfy_history', JSON.stringify(state.chatHistory));
+        localStorage.setItem('ntfy_username', state.username);
     }
 
     function renderTopics() {
-        const list = document.getElementById('topic-list');
-        list.innerHTML = '';
-        state.topics.forEach(t => {
-            const div = document.createElement('div');
-            const isActive = state.activeTopic === t;
-            div.className = `p-4 rounded-2xl flex items-center justify-between cursor-pointer transition-all ${isActive ? 'bg-blue-600 text-white shadow-lg' : 'bg-white dark:bg-slate-800 dark:text-white'}`;
-            div.innerHTML = `
-                <div class="flex items-center gap-3 font-bold flex-1 overflow-hidden" onclick="selectTopic('${t}')">
-                    <span class="${isActive ? 'text-white/50' : 'text-blue-500'} font-black">#</span>
-                    <span class="truncate">${t}</span>
-                </div>
-                <button onclick="deleteTopic('${t}')" class="p-2 opacity-30 hover:opacity-100">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                </button>
+        topicListEl.innerHTML = '';
+        state.topics.forEach(topic => {
+            const btn = document.createElement('button');
+            btn.className = `w-full text-left p-3 rounded-xl flex items-center justify-between group transition-all mb-1 ${state.activeTopic === topic ? 'bg-blue-600 shadow-md translate-x-1' : 'hover:bg-slate-700/50'}`;
+            
+            btn.innerHTML = `
+                <span class="truncate pr-2 text-sm font-medium ${state.activeTopic === topic ? 'text-white' : 'text-slate-300'}">${topic}</span>
+                <span class="text-[10px] text-slate-500 group-hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all p-1" onclick="deleteTopic(event, '${topic}')">✕</span>
             `;
-            list.appendChild(div);
+            
+            btn.onclick = () => selectTopic(topic);
+            topicListEl.appendChild(btn);
         });
     }
 
-    function deleteTopic(t) {
-        if(confirm(`ルーム「${t}」を非表示にしますか？`)) {
-            state.topics = state.topics.filter(x => x !== t);
-            if (state.activeTopic === t) state.activeTopic = null;
-            save();
+    function deleteTopic(e, topic) {
+        e.stopPropagation();
+        if (confirm(`ルーム「${topic}」を削除しますか？履歴も消去されます。`)) {
+            state.topics = state.topics.filter(t => t !== topic);
+            delete state.chatHistory[topic];
+            if (state.activeTopic === topic) {
+                state.activeTopic = null;
+                if (state.socket) state.socket.close();
+            }
+            saveState();
             renderTopics();
+            renderChat();
         }
     }
 
-    function connect(topic) {
-        if (state.socket) state.socket.close();
-        state.socket = new WebSocket(`wss://ntfy.sh/${topic}/ws`);
-        state.socket.onmessage = (e) => {
-            const data = JSON.parse(e.data);
-            if (data.event === 'message') {
-                handleIncoming(topic, data);
-            }
-        };
-    }
-
-    function handleIncoming(topic, data) {
-        let sender = '不明', text = data.message, file = null;
+    function selectTopic(topic) {
+        if (state.activeTopic === topic) return;
         
-        if (data.attachment) {
-            file = { name: data.attachment.name, type: data.attachment.type, url: data.attachment.url };
-        }
+        state.activeTopic = topic;
+        renderTopics();
+        renderChat();
+        inputArea.classList.remove('hidden');
+        currentTopicName.textContent = topic;
+        
+        // Sidebar auto-close on mobile
+        sidebar.classList.remove('active');
 
-        if (text.includes('|B64|')) {
-            const p = text.split('|B64|');
-            sender = p[0];
-            try { file = { ...JSON.parse(p[1]), isInline: true }; } catch(e) {}
-            text = "";
-        } 
-        else if (text.includes(':')) {
-            const p = text.split(':');
-            sender = p.shift().trim();
-            text = p.join(':').trim();
-        }
-
-        const msg = {
-            id: data.id,
-            sender,
-            text,
-            file,
-            time: new Date(data.time * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
-        };
-
-        if (!state.history[topic]) state.history[topic] = [];
-        if (!state.history[topic].some(m => m.id === data.id)) {
-            state.history[topic].push(msg);
-            save();
-            if (state.activeTopic === topic) renderChat();
-            
-            // Notification logic
-            if (sender !== state.username && document.hidden) {
-                if (Notification.permission === "granted") {
-                    new Notification(`${sender} (#${topic})`, {
-                        body: text || (file ? "ファイルを送信しました" : "新着メッセージ"),
-                        icon: "https://cdn-icons-png.flaticon.com/512/732/732236.png"
-                    });
-                }
-            }
-        }
+        // Connect WebSocket
+        connectWebSocket(topic);
     }
 
-    function removeMessage(id) {
-        if (!state.activeTopic) return;
-        state.history[state.activeTopic] = state.history[state.activeTopic].filter(m => m.id !== id);
-        save();
-        renderChat();
+    function connectWebSocket(topic) {
+        if (state.socket) {
+            state.socket.close();
+        }
+
+        statusText.textContent = '接続中...';
+        statusDot.className = 'w-2 h-2 rounded-full bg-yellow-400 mr-1.5';
+
+        state.socket = new WebSocket(`wss://ntfy.sh/${topic}/ws`);
+
+        state.socket.onopen = () => {
+            statusText.textContent = 'リアルタイム接続中';
+            statusDot.className = 'w-2 h-2 rounded-full bg-green-500 mr-1.5 shadow-[0_0_8px_rgba(34,197,94,0.6)]';
+        };
+
+        state.socket.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            if (data.event === 'message') {
+                handleIncomingMessage(topic, data);
+            }
+        };
+
+        state.socket.onclose = () => {
+            if (state.activeTopic === topic) {
+                statusText.textContent = 'オフライン (再試行中)';
+                statusDot.className = 'w-2 h-2 rounded-full bg-red-400 mr-1.5';
+                setTimeout(() => {
+                    if (state.activeTopic === topic) connectWebSocket(topic);
+                }, 5000);
+            }
+        };
+    }
+
+    function handleIncomingMessage(topic, data) {
+        let senderName = '不明なユーザー';
+        let body = data.message;
+
+        // Try to parse format "Username:Message"
+        if (body.includes(':')) {
+            const separatorIndex = body.indexOf(':');
+            senderName = body.substring(0, separatorIndex);
+            body = body.substring(separatorIndex + 1);
+        }
+
+        const msgObj = {
+            id: data.id,
+            sender: senderName,
+            text: body,
+            time: new Date(data.time * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+            timestamp: data.time
+        };
+
+        if (!state.chatHistory[topic]) state.chatHistory[topic] = [];
+        
+        // Duplicate check
+        if (!state.chatHistory[topic].find(m => m.id === data.id)) {
+            state.chatHistory[topic].push(msgObj);
+            saveState();
+            if (state.activeTopic === topic) {
+                renderChat();
+            }
+        }
     }
 
     function renderChat() {
-        const container = document.getElementById('chat-container');
-        container.innerHTML = '';
-        const history = state.history[state.activeTopic] || [];
+        if (!state.activeTopic) {
+            chatContainer.innerHTML = `
+                <div class="flex flex-col items-center justify-center h-full text-slate-400 italic">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mb-3 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                    <p>ルームを選択してください</p>
+                </div>`;
+            inputArea.classList.add('hidden');
+            return;
+        }
 
-        history.forEach(m => {
-            const isMe = m.sender === state.username;
-            const wrap = document.createElement('div');
-            wrap.className = `msg-group flex flex-col ${isMe ? 'items-end' : 'items-start'} slide-in`;
+        const history = state.chatHistory[state.activeTopic] || [];
+        chatContainer.innerHTML = '';
+
+        if (history.length === 0) {
+            chatContainer.innerHTML = `
+                <div class="flex flex-col items-center justify-center h-full text-slate-400 italic">
+                    <p>メッセージがありません。会話を始めましょう！</p>
+                </div>`;
+        }
+
+        history.forEach(msg => {
+            const isMe = msg.sender === state.username;
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flex w-full mb-1 ${isMe ? 'justify-end' : 'justify-start'}`;
             
-            let fileHtml = '';
-            if (m.file) {
-                const isImg = m.file.type && m.file.type.startsWith('image/');
-                const source = m.file.isInline ? m.file.data : m.file.url;
-                if (isImg) {
-                    fileHtml = `<div class="mt-2"><img src="${source}" class="rounded-2xl max-w-full shadow-sm cursor-pointer" onclick="window.open('${source}')"></div>`;
-                } else {
-                    fileHtml = `
-                        <a href="${source}" target="_blank" class="file-attachment mt-2 border border-slate-100 dark:border-slate-700">
-                            <div class="p-2 bg-blue-500 text-white rounded-lg text-[10px] font-black">FILE</div>
-                            <p class="text-xs font-bold truncate">${m.file.name}</p>
-                        </a>`;
-                }
-            }
-
-            wrap.innerHTML = `
-                <div class="flex items-center gap-2 mb-1">
-                    ${!isMe ? `<span class="text-[10px] font-black text-slate-400 ml-1 tracking-tight">${m.sender}</span>` : ''}
-                    <button onclick="removeMessage('${m.id}')" class="msg-actions text-slate-300 hover:text-red-500 p-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                    </button>
-                </div>
-                <div class="bubble p-4 shadow-sm ${isMe ? 'bubble-outbound' : 'bubble-inbound dark:bg-slate-800 dark:text-white'}">
-                    ${m.text ? `<p class="text-sm font-medium break-all whitespace-pre-wrap leading-relaxed">${m.text}</p>` : ''}
-                    ${fileHtml}
-                    <div class="flex items-center justify-end mt-2 opacity-40 text-[9px] font-bold italic">${m.time}</div>
+            messageDiv.innerHTML = `
+                <div class="max-w-[80%] flex flex-col ${isMe ? 'items-end' : 'items-start'}">
+                    ${!isMe ? `<span class="text-[10px] text-slate-500 ml-2 mb-0.5">${escapeHtml(msg.sender)}</span>` : ''}
+                    <div class="relative px-4 py-2 rounded-2xl text-sm shadow-sm transition-all ${isMe ? 'bg-blue-600 text-white message-outbound' : 'bg-white text-slate-800 border border-slate-200 message-inbound'}">
+                        <div class="whitespace-pre-wrap break-words">${escapeHtml(msg.text)}</div>
+                        <span class="block text-[9px] mt-1 opacity-60 text-right leading-none">${msg.time}</span>
+                    </div>
                 </div>
             `;
-            container.appendChild(wrap);
+            chatContainer.appendChild(messageDiv);
         });
-        container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+
+        chatContainer.scrollTop = chatContainer.scrollHeight;
     }
 
-    async function send() {
-        const input = document.getElementById('message-input');
-        const text = input.value.trim();
-        if (!text && !state.pendingFile) return;
+    async function sendMessage(text) {
+        if (!state.activeTopic || !text.trim()) return;
 
-        let body = text ? `${state.username}: ${text}` : "";
-        if (state.pendingFile) {
-            body = `${state.username}|B64|${JSON.stringify(state.pendingFile)}`;
-            if (text) body += `\n\n${text}`;
-        }
-        
+        // Use Username:Message format
+        const payload = `${state.username}:${text}`;
+
         try {
-            await fetch(`https://ntfy.sh/${state.activeTopic}`, { method: 'POST', body: body });
-            input.value = '';
-            input.style.height = 'auto';
-            state.pendingFile = null;
-            document.getElementById('file-preview-area').classList.add('hidden');
-        } catch(e) { alert('送信失敗'); }
+            await fetch(`https://ntfy.sh/${state.activeTopic}`, {
+                method: 'POST',
+                body: payload,
+                headers: {
+                    'Title': `Message from ${state.username}`
+                }
+            });
+            messageInput.value = '';
+            adjustTextareaHeight();
+        } catch (error) {
+            console.error('Failed to send message', error);
+            showError('送信できませんでした。通信環境を確認してください。');
+        }
     }
 
-    // File Logic
-    function handleFile(file) {
-        if (!file || file.size > 1024 * 1024) return alert('1MB以内のファイルのみ');
-        const r = new FileReader();
-        r.onload = (ev) => {
-            state.pendingFile = { name: file.name, type: file.type, data: ev.target.result, size: Math.round(file.size / 1024) + ' KB' };
-            document.getElementById('file-name').textContent = file.name;
-            document.getElementById('file-size').textContent = state.pendingFile.size;
-            document.getElementById('file-ext').textContent = file.name.split('.').pop().toUpperCase();
-            document.getElementById('file-preview-area').classList.remove('hidden');
-        };
-        r.readAsDataURL(file);
+    function showError(msg) {
+        const errorToast = document.createElement('div');
+        errorToast.className = 'fixed top-20 left-1/2 transform -translate-x-1/2 bg-red-500 text-white px-6 py-3 rounded-xl shadow-2xl z-[100] transition-all animate-bounce';
+        errorToast.textContent = msg;
+        document.body.appendChild(errorToast);
+        setTimeout(() => {
+            errorToast.classList.add('opacity-0');
+            setTimeout(() => errorToast.remove(), 500);
+        }, 3000);
     }
 
-    window.addEventListener('dragover', (e) => { e.preventDefault(); if (state.activeTopic) document.body.classList.add('dragging'); });
-    window.addEventListener('dragleave', (e) => { if (e.relatedTarget === null) document.body.classList.remove('dragging'); });
-    window.addEventListener('drop', (e) => { e.preventDefault(); document.body.classList.remove('dragging'); if (state.activeTopic) handleFile(e.dataTransfer.files[0]); });
-    window.addEventListener('paste', (e) => { 
-        if (!state.activeTopic) return;
-        const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-        for (let i in items) if (items[i].kind === 'file') handleFile(items[i].getAsFile());
-    });
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
 
-    document.getElementById('file-btn').onclick = () => document.getElementById('hidden-file').click();
-    document.getElementById('hidden-file').onchange = (e) => handleFile(e.target.files[0]);
-    document.getElementById('cancel-file').onclick = () => { state.pendingFile = null; document.getElementById('file-preview-area').classList.add('hidden'); };
-    document.getElementById('send-btn').onclick = send;
-    document.getElementById('message-input').onkeydown = (e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } };
+    function adjustTextareaHeight() {
+        messageInput.style.height = 'auto';
+        messageInput.style.height = (messageInput.scrollHeight) + 'px';
+    }
 
-    // Other UI
-    document.getElementById('new-room-btn').onclick = () => document.getElementById('modal-overlay').classList.remove('hidden');
-    document.getElementById('close-modal').onclick = () => document.getElementById('modal-overlay').classList.add('hidden');
-    document.getElementById('create-room').onclick = () => {
-        const name = document.getElementById('new-room-input').value.trim().toLowerCase().replace(/[^a-z0-9-]/g, '');
+    // --- Event Listeners ---
+
+    // Username Change
+    usernameInput.onblur = () => {
+        const newName = usernameInput.value.trim();
+        if (newName && newName !== state.username) {
+            state.username = newName;
+            saveState();
+            renderChat(); // Refresh to update "isMe" status
+        } else {
+            usernameInput.value = state.username;
+        }
+    };
+
+    usernameInput.onkeydown = (e) => {
+        if (e.key === 'Enter') {
+            usernameInput.blur();
+        }
+    };
+
+    // Modal Events
+    addTopicBtn.onclick = () => {
+        modalOverlay.classList.remove('hidden');
+        topicInput.focus();
+    };
+
+    cancelModal.onclick = () => {
+        modalOverlay.classList.add('hidden');
+        topicInput.value = '';
+    };
+
+    confirmModal.onclick = () => {
+        const name = topicInput.value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
         if (name) {
-            if (!state.topics.includes(name)) state.topics.push(name);
-            save(); selectTopic(name);
-            document.getElementById('modal-overlay').classList.add('hidden');
+            if (!state.topics.includes(name)) {
+                state.topics.push(name);
+                saveState();
+                renderTopics();
+            }
+            selectTopic(name);
+            modalOverlay.classList.add('hidden');
+            topicInput.value = '';
         }
     };
 
-    document.getElementById('user-name-input').onchange = (e) => { state.username = e.target.value.trim() || 'Guest'; updateAvatar(); save(); };
-    document.getElementById('dark-mode-btn').onclick = () => { state.dark = !state.dark; document.body.classList.toggle('dark'); save(); };
-    document.getElementById('clear-history-btn').onclick = () => { if (state.activeTopic && confirm('履歴をクリア？')) { state.history[state.activeTopic] = []; save(); renderChat(); } };
-    
-    document.getElementById('notification-btn').onclick = requestNotifPermission;
-    document.getElementById('toggle-notif-row').onclick = requestNotifPermission;
+    // Chat Events
+    chatForm.onsubmit = (e) => {
+        e.preventDefault();
+        sendMessage(messageInput.value);
+    };
 
-    window.onload = () => {
-        renderTopics();
-        if (window.innerWidth >= 1024) selectTopic(state.topics[0]); else switchView('rooms');
-        // Initial request on load
-        if (Notification.permission === "default") {
-            setTimeout(requestNotifPermission, 2000);
+    messageInput.onkeydown = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            chatForm.requestSubmit();
         }
     };
+
+    messageInput.oninput = adjustTextareaHeight;
+
+    clearChatBtn.onclick = () => {
+        if (state.activeTopic && confirm('このルームの履歴を削除しますか？\n(自分側の表示のみ削除されます)')) {
+            state.chatHistory[state.activeTopic] = [];
+            saveState();
+            renderChat();
+        }
+    };
+
+    openSidebarBtn.onclick = () => sidebar.classList.add('active');
+    closeSidebarBtn.onclick = () => sidebar.classList.remove('active');
+
+    // --- Initialization ---
+    renderTopics();
+    renderChat();
+
 </script>
+
 </body>
 </html>
